@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Analytics Dashboard</title>
+
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Kelly.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Dark.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-bg: #eef2f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --accent-color: #6366f1;
+            --heading-color: #1e293b;
+            --subheading-color: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --gradient-2: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+            --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            --gradient-4: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+            --gradient-5: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+        }
+
+        body.dark-mode {
+            --primary-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --accent-color: #818cf8;
+            --heading-color: #f8fafc;
+            --subheading-color: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        body { font-family: 'Outfit', sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+        .header { background: var(--card-bg); padding: 1.5rem 2rem; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
+        .header h1 { margin: 0; font-size: 1.5rem; font-weight: 600; background: var(--gradient-1); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .theme-toggle { background: none; border: 2px solid var(--accent-color); color: var(--accent-color); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: inherit; transition: all 0.2s; }
+        .theme-toggle:hover { background: var(--accent-color); color: white; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; }
+        .insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .insight-card { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); transition: transform 0.2s; position: relative; overflow: hidden; }
+        .insight-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .insight-card:nth-child(1)::before { background: var(--gradient-1); }
+        .insight-card:nth-child(2)::before { background: var(--gradient-2); }
+        .insight-card:nth-child(3)::before { background: var(--gradient-3); }
+        .insight-card:nth-child(4)::before { background: var(--gradient-4); }
+        .insight-card:nth-child(5)::before { background: var(--gradient-5); }
+        .insight-card:hover { transform: translateY(-5px); }
+        .insight-title { font-size: 0.875rem; color: var(--subheading-color); margin-bottom: 0.5rem; }
+        .insight-value { font-size: 2rem; font-weight: 600; color: var(--heading-color); }
+        .controls { background: var(--card-bg); padding: 1rem 2rem; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 2rem; display: flex; gap: 2rem; align-items: center; }
+        .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        label { font-size: 0.875rem; font-weight: 600; color: var(--subheading-color); }
+        select { padding: 0.5rem 1rem; border: 1px solid var(--border-color); background: var(--primary-bg); color: var(--text-color); border-radius: 8px; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+        select:focus { border-color: var(--accent-color); }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+        .chart-card { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); min-height: 400px; }
+        .chart-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .chart-header h2 { margin: 0; font-size: 1.25rem; color: var(--heading-color); }
+        .chart-div { width: 100%; height: 350px; }
+        .error-toast { position: fixed; bottom: 2rem; right: 2rem; background: #ffe4e6; color: #be123c; padding: 1rem 2rem; border-radius: 8px; box-shadow: var(--shadow); border-left: 4px solid #be123c; z-index: 1000; opacity: 0; transform: translateY(20px); transition: all 0.3s; }
+        .error-toast.show { opacity: 1; transform: translateY(0); }
+        @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>University Analytics</h1>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="font-size: 0.9rem; color: var(--subheading-color);">Live Dashboard</div>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark Mode</button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="insights-grid">
+            <div class="insight-card">
+                <div class="insight-title">Total Students</div>
+                <div class="insight-value" id="totalStudents">-</div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-title">Total Courses</div>
+                <div class="insight-value" id="totalCourses">-</div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-title">Total Fees Revenue</div>
+                <div class="insight-value" id="totalFees">-</div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-title">Avg Professor Salary</div>
+                <div class="insight-value" id="avgSalary">-</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="yearSelect">Filter by Year</label>
+                <select id="yearSelect">
+                    <option value="">All Years</option>
+                    <option value="1">First Year</option>
+                    <option value="2">Second Year</option>
+                    <option value="3">Third Year</option>
+                    <option value="4">Fourth Year</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="departmentSelect">Filter by Department</label>
+                <select id="departmentSelect">
+                    <option value="All">Loading departments...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Enrollment Distribution</h2>
+                </div>
+                <div id="enrollmentChart" class="chart-div"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Students per Course</h2>
+                </div>
+                <div id="studentsChart" class="chart-div"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Fees Trend by Year</h2>
+                </div>
+                <div id="feesChart" class="chart-div"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Departmental Salaries</h2>
+                </div>
+                <div id="salaryChart" class="chart-div"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Top 5 Most Enrolled Courses</h2>
+                </div>
+                <div id="topCoursesChart" class="chart-div"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Student Gender Distribution</h2>
+                </div>
+                <div id="genderChart" class="chart-div"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorToast" class="error-toast">Something went wrong fetching data.</div>
+
+    <script>
+        function showError(msg) {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = msg || "Error loading data.";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+        }
+
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        const roots = {};
+
+        function toggleTheme() {
+            setTheme(currentTheme === 'light' ? 'dark' : 'light');
+        }
+
+        function setTheme(mode) {
+            currentTheme = mode;
+            localStorage.setItem('theme', mode);
+            document.body.classList.toggle('dark-mode', mode === 'dark');
+            document.getElementById('themeToggle').innerText = mode === 'dark' ? 'Light Mode' : 'Dark Mode';
+            reloadCharts();
+        }
+
+        am5.ready(function () {
+            setTheme(currentTheme);
+            fetchDataAndCreateCharts();
+
+            document.getElementById('yearSelect').addEventListener('change', (e) => loadEnrollment(e.target.value || null));
+            document.getElementById('departmentSelect').addEventListener('change', (e) => loadStudents(e.target.value));
+        });
+
+        function reloadCharts() {
+            Object.values(roots).forEach(root => root.dispose());
+            fetchDataAndCreateCharts();
+        }
+
+        function fetchDataAndCreateCharts() {
+            loadInsights();
+            loadDepartments();
+            loadEnrollment(document.getElementById('yearSelect').value || null);
+            loadStudents(document.getElementById('departmentSelect').value);
+            loadFees();
+            loadSalary();
+            loadTopCourses();
+            loadGender();
+        }
+
+        function getAmTheme(root) {
+            const themes = [am5themes_Animated.new(root)];
+            themes.push(currentTheme === 'dark' ? am5themes_Dark.new(root) : am5themes_Kelly.new(root));
+            return themes;
+        }
+
+        const API_BASE = "";
+
+        function loadInsights() {
+            fetch(`${API_BASE}/api/insights`)
+                .then(res => res.ok ? res.json() : Promise.reject(res))
+                .then(data => {
+                    document.getElementById('totalStudents').innerText = data.total_students.toLocaleString();
+                    document.getElementById('totalCourses').innerText = data.total_courses.toLocaleString();
+                    document.getElementById('totalFees').innerText = formatCurrency(data.total_fees);
+                    document.getElementById('avgSalary').innerText = formatCurrency(data.avg_salary);
+                })
+                .catch(() => showError("Failed to load insights data"));
+        }
+
+        function loadDepartments() {
+            fetch(`${API_BASE}/api/departments`)
+                .then(res => res.ok ? res.json() : Promise.reject(res))
+                .then(depts => {
+                    const select = document.getElementById('departmentSelect');
+                    select.innerHTML = '';
+                    depts.forEach(dept => {
+                        const opt = document.createElement('option');
+                        opt.value = dept;
+                        opt.textContent = dept;
+                        select.appendChild(opt);
+                    });
+                    loadStudents(select.value);
+                })
+                .catch(() => showError("Failed to load departments"));
+        }
+
+        function loadEnrollment(year) {
+            let url = `${API_BASE}/api/enrollment_by_year`;
+            if (year) url += `?year=${year}`;
+            fetch(url)
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => createColumnChart("enrollmentChart", "YearName", "StudentCount", data))
+                .catch(() => showError("Failed to load enrollment data"));
+        }
+
+        function loadStudents(dept) {
+            fetch(`${API_BASE}/api/students_per_course?department=${dept || 'All'}`)
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => createColumnChart("studentsChart", "CourseName", "StudentCount", data))
+                .catch(() => showError("Failed to load course data"));
+        }
+
+        function loadFees() {
+            fetch(`${API_BASE}/api/fees_by_year`)
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => createColumnChart("feesChart", "YearName", "TotalFees", data))
+                .catch(() => showError("Failed to load fees data"));
+        }
+
+        function loadSalary() {
+            fetch(`${API_BASE}/api/salary_by_department`)
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => createColumnChart("salaryChart", "Department", "TotalSalary", data))
+                .catch(() => showError("Failed to load salary data"));
+        }
+
+        function loadTopCourses() {
+            fetch(`${API_BASE}/api/top_courses`)
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => createColumnChart("topCoursesChart", "CourseName", "StudentCount", data))
+                .catch(() => showError("Failed to load top courses"));
+        }
+
+        function loadGender() {
+            fetch(`${API_BASE}/api/gender_distribution`)
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => {
+                    // فلترة البيانات عشان نعرض Male و Female بس
+                    const filteredData = data.filter(item => item.Gender === "Male" || item.Gender === "Female");
+                    createPieChart("genderChart", filteredData);
+                })
+                .catch(() => showError("Failed to load gender data"));
+        }
+
+        function createColumnChart(divId, categoryField, valueField, data) {
+            if (roots[divId]) roots[divId].dispose();
+
+            var root = am5.Root.new(divId);
+            roots[divId] = root;
+            root.setThemes(getAmTheme(root));
+
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: true,
+                panY: false,
+                wheelX: "panX",
+                wheelY: "zoomX",
+                layout: root.verticalLayout
+            }));
+
+            var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
+            cursor.lineY.set("visible", false);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, {
+                minGridDistance: 30,
+                cellStartLocation: 0.2,
+                cellEndLocation: 0.8
+            });
+            xRenderer.labels.template.setAll({
+                rotation: -45,
+                centerY: am5.p50,
+                centerX: am5.p100,
+                paddingRight: 15
+            });
+
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: categoryField,
+                renderer: xRenderer,
+                tooltip: am5.Tooltip.new(root, {})
+            }));
+            xAxis.data.setAll(data);
+
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                renderer: am5xy.AxisRendererY.new(root, {})
+            }));
+
+            var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                name: valueField,
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: valueField,
+                categoryXField: categoryField,
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{categoryX}: {valueY}"
+                })
+            }));
+
+            series.columns.template.setAll({
+                cornerRadiusTL: 5,
+                cornerRadiusTR: 5,
+                strokeOpacity: 0
+            });
+
+            // رجعت الألوان الجميلة الديناميكية زي الأول وأحسن
+            series.columns.template.adapters.add("fill", function(fill, target) {
+                return chart.get("colors").getIndex(series.columns.indexOf(target));
+            });
+            series.columns.template.adapters.add("stroke", function(stroke, target) {
+                return chart.get("colors").getIndex(series.columns.indexOf(target));
+            });
+
+            series.data.setAll(data);
+            series.appear(1000);
+            chart.appear(1000, 100);
+        }
+
+        function createPieChart(divId, data) {
+            if (roots[divId]) roots[divId].dispose();
+
+            var root = am5.Root.new(divId);
+            roots[divId] = root;
+            root.setThemes(getAmTheme(root));
+
+            var chart = root.container.children.push(am5percent.PieChart.new(root, {
+                layout: root.verticalLayout,
+                innerRadius: am5.percent(60)  // donut أجمل
+            }));
+
+            var series = chart.series.push(am5percent.PieSeries.new(root, {
+                valueField: "StudentCount",
+                categoryField: "Gender",
+                alignLabels: false
+            }));
+
+            series.labels.template.setAll({
+                textType: "circular",
+                centerX: am5.percent(100),
+                fontSize: 16,
+                radius: 8
+            });
+
+            series.ticks.template.set("visible", false);
+
+            series.slices.template.setAll({
+                cornerRadius: 10,
+                stroke: root.interfaceColors.get("background"),
+                strokeWidth: 3,
+                tooltipText: "{category}: {value} students ({value.percent.formatNumber('0.0%')})"
+            });
+
+            // ألوان مخصصة للـ Male و Female عشان تبقى واضحة
+            series.get("colors").set("colors", [
+                am5.color("#3b82f6"),  // أزرق للـ Male
+                am5.color("#ec4899")   // وردي للـ Female
+            ]);
+
+            series.data.setAll(data);
+
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerX: am5.percent(50),
+                x: am5.percent(50),
+                layout: root.horizontalLayout,
+                paddingTop: 20
+            }));
+            legend.data.setAll(series.dataItems);
+
+            series.appear(1000, 100);
+        }
+    </script>
+</body>
+
+</html>

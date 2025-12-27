@@ -298,7 +298,7 @@
             fetch(`${API_BASE}/api/gender_distribution`)
                 .then(r => r.ok ? r.json() : Promise.reject(r))
                 .then(data => {
-                    // فلترة البيانات عشان نعرض Male و Female بس
+                    
                     const filteredData = data.filter(item => item.Gender === "Male" || item.Gender === "Female");
                     createPieChart("genderChart", filteredData);
                 })
@@ -363,7 +363,7 @@
                 strokeOpacity: 0
             });
 
-            // رجعت الألوان الجميلة الديناميكية زي الأول وأحسن
+           
             series.columns.template.adapters.add("fill", function(fill, target) {
                 return chart.get("colors").getIndex(series.columns.indexOf(target));
             });
@@ -385,7 +385,7 @@
 
             var chart = root.container.children.push(am5percent.PieChart.new(root, {
                 layout: root.verticalLayout,
-                innerRadius: am5.percent(60)  // donut أجمل
+                innerRadius: am5.percent(60) 
             }));
 
             var series = chart.series.push(am5percent.PieSeries.new(root, {
@@ -410,10 +410,9 @@
                 tooltipText: "{category}: {value} students ({value.percent.formatNumber('0.0%')})"
             });
 
-            // ألوان مخصصة للـ Male و Female عشان تبقى واضحة
             series.get("colors").set("colors", [
-                am5.color("#3b82f6"),  // أزرق للـ Male
-                am5.color("#ec4899")   // وردي للـ Female
+                am5.color("#3b82f6"),  
+                am5.color("#ec4899")   
             ]);
 
             series.data.setAll(data);
